@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univen Lost and Found</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        
+        header {
+            background: #007BFF;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            max-height: 50px;
+            width: auto;
+        }
+        
+        header h1 {
+            color: white;
+            font-size: 1.8rem;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .container {
+            background: white;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin: 80px auto 60px;
+            /* Adjusted for header and footer */
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #f9f9f9;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .secondary-btn {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .secondary-btn:hover {
+            background: #5a6268;
+        }
+        
+        .forgot-password-btn {
+            background: none;
+            color: #007BFF;
+            border: none;
+            padding: 10px 0;
+            font-size: 0.9rem;
+            text-align: left;
+            cursor: pointer;
+            width: auto;
+        }
+        
+        .forgot-password-btn:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        
+        .camera-btn,
+        .upload-btn {
+            background: #28a745 !important;
+            width: auto;
+            padding: 10px 20px;
+            margin: 5px;
+            display: inline-block;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .camera-btn:hover,
+        .upload-btn:hover {
+            background: #218838 !important;
+            transform: translateY(-2px);
+        }
+        
+        .camera-btn:focus,
+        .upload-btn:focus {
+            outline: 2px solid #007BFF;
+            outline-offset: 2px;
+        }
+        
+        #error,
+        #register-error,
+        #reset-error {
+            color: #DC3545;
+            background: #ffe6e6;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .menu,
+        .results,
+        .item-list {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: #f9f9f9;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button:hover {
+            background: #e9ecef;
+        }
+        
+        .tab-button.active {
+            border-bottom: 2px solid #007BFF;
+            color: #007BFF;
+        }
+        
+        .image-preview {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            border: 2px dashed #007BFF;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .image-preview .placeholder {
+            color: #6c757d;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .image-preview .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #DC3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: none;
+            z-index: 5;
+        }
+        
+        .image-preview.has-image .remove-btn {
+            display: block;
+        }
+        
+        .camera-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .camera-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .camera-modal video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 8px;
+            margin: 0 auto 15px;
+            display: block;
+            background: #000;
+        }
+        
+        .captured-photo {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 8px;
+            margin: 0 auto 15px;
+            background: #f8f9fa;
+            border: 2px solid #28a745;
+        }
+        
+        .camera-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+        
+        .camera-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex: 1;
+        }
+        
+        .capture-btn {
+            background: #28a745;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .capture-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: scale(1.05);
+        }
+        
+        .capture-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .close-camera {
+            background: #DC3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s ease;
+        }
+        
+        .close-camera:hover {
+            background: #c82333;
+        }
+        
+        .camera-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        .camera-loading.show {
+            display: block;
+        }
+        
+        .camera-loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .item .icon {
+            font-size: 1.8rem;
+            margin-right: 15px;
+            width: 40px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        
+        .item .icon:hover {
+            transform: scale(1.1);
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+            }
+        }
+        
+        .item .icon.bagpack {
+            color: #007BFF;
+        }
+        
+        .item .icon.key {
+            color: #6c757d;
+        }
+        
+        .item .icon.wallet {
+            color: #28a745;
+        }
+        
+        .item .icon.student_card {
+            color: #DC3545;
+        }
+        
+        .item .icon.laptop {
+            color: #17a2b8;
+        }
+        
+        .item .icon.headphones {
+            color: #ffc107;
+        }
+        
+        .item .icon.books {
+            color: #6610f2;
+        }
+        
+        .item .icon.phone {
+            color: #fd7e14;
+        }
+        
+        .item .icon.default {
+            color: #6c757d;
+        }
+        
+        .item .content {
+            flex: 1;
+        }
+        
+        .item p {
+            margin: 0;
+            color: #333;
+        }
+        
+        .item .date,
+        .item .student-num {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .item button {
+            width: auto;
+            padding: 8px 16px;
+            background: #007BFF;
+        }
+        
+        .item button:hover {
+            background: #0056b3;
+        }
+        
+        .item .claimed {
+            color: #DC3545;
+            font-weight: 600;
+        }
+        
+        .item-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .logout-btn {
+            background: #DC3545;
+            margin-top: 20px;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        
+        footer {
+            background: #DC3545;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 10px 15px;
+            }
+            .logo {
+                max-height: 40px;
+            }
+            header h1 {
+                font-size: 1.2rem;
+            }
+            .container {
+                padding: 20px;
+                margin: 70px auto 50px;
+            }
+            h2 {
+                font-size: 1.2rem;
+            }
+            button {
+                font-size: 0.9rem;
+            }
+            .item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .item .icon {
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+            .item button {
+                margin-top: 10px;
+            }
+            .tabs {
+                flex-direction: column;
+            }
+            .tab-button {
+                padding: 8px;
+            }
+            footer {
+                padding: 10px 15px;
+            }
+            footer p {
+                font-size: 0.8rem;
+            }
+            .camera-modal {
+                padding: 15px;
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+            .camera-modal video,
+            .captured-photo {
+                max-width: 100%;
+                max-height: 50vh;
+            }
+            .camera-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .camera-btns {
+                order: -1;
+                width: 100%;
+            }
+            .capture-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+            .image-preview {
+                max-width: 100%;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <img src="logo.jpg" alt="Univen Logo" class="logo">
+        <h1>Univen Lost and Found</h1>
+        <div style="width: 150px;"></div>
+        <!-- Spacer for alignment -->
+    </header>
+
+    <div class="container">
+        <div id="login-section">
+            <h2>Login</h2>
+            <div id="error"></div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role">
+                    <option value="student">Student</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="username">Student Number / Username</label>
+                <input type="text" id="username" placeholder="Enter student number or username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" maxlength="5" oninput="restrictStudentPassword(this)">
+            </div>
+            <button class="forgot-password-btn" onclick="showResetPassword()">Forgot Password?</button>
+            <button onclick="login()">Login</button>
+            <button class="secondary-btn" onclick="showRegister()">Register as Student</button>
+        </div>
+
+        <div id="register-section" class="hidden">
+            <h2>Student Registration</h2>
+            <div id="register-error"></div>
+            <div class="form-group">
+                <label for="register-student-num">Student Number</label>
+                <input type="text" id="register-student-num" placeholder="Enter 8-digit student number" maxlength="8">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Password</label>
+                <input type="password" id="register-password" placeholder="Enter 5-digit password" maxlength="5">
+            </div>
+            <button onclick="register()">Register</button>
+            <button class="secondary-btn" onclick="showLogin()">Back to Login</button>
+        </div>
+
+        <div id="reset-password-section" class="hidden">
+            <h2>Reset Password</h2>
+            <div id="reset-error"></div>
+            <div class="form-group">
+                <label for="reset-student-num">Student Number</label>
+                <input type="text" id="reset-student-num" placeholder="Enter 8-digit student number" maxlength="8">
+            </div>
+            <button onclick="resetPassword()">Send Reset Email</button>
+            <button class="secondary-btn" onclick="showLogin()">Back to Login</button>
+        </div>
+
+        <div id="admin-section" class="hidden">
+            <h2>Admin Dashboard</h2>
+            <div class="tabs">
+                <button class="tab-button active" onclick="openAdminTab(event, 'add')">Add Items</button>
+                <button class="tab-button" onclick="openAdminTab(event, 'items')">All Items</button>
+                <button class="tab-button" onclick="openAdminTab(event, 'claims')">Claim History</button>
+            </div>
+
+            <div id="admin-add" class="tab-content">
+                <h3>Add New Lost Item</h3>
+                <div class="form-group">
+                    <label for="item-category">Item Category</label>
+                    <select id="item-category">
+                        <option value="bagpack">Bagpack</option>
+                        <option value="key">Key</option>
+                        <option value="wallet">Wallet</option>
+                        <option value="student_card">Student Card</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="headphones">Headphones</option>
+                        <option value="books">Books</option>
+                        <option value="phone">Phone</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="item-description">Item Description</label>
+                    <input type="text" id="item-description" placeholder="Enter item description">
+                </div>
+
+                <div class="form-group">
+                    <label>Item Image</label>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="camera-btn" id="cameraBtn">
+                            <i class="fas fa-camera"></i> Camera
+                        </button>
+                        <label for="image-upload" class="upload-btn">
+                            <i class="fas fa-upload"></i> Upload
+                        </label>
+                        <input type="file" id="image-upload" class="file-input" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="image-preview" id="image-preview">
+                    <div class="placeholder">
+                        <i class="fas fa-image" style="font-size: 2rem; color: #ccc; margin-bottom: 10px;"></i>
+                        <p>No image selected</p>
+                    </div>
+                    <button class="remove-btn" onclick="removeImage()" title="Remove image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <button onclick="addItem()">Add Item</button>
+            </div>
+
+            <div id="admin-items" class="tab-content hidden">
+                <div class="item-list" id="admin-item-list">
+                    <h3>All Items</h3>
+                </div>
+            </div>
+
+            <div id="admin-claims" class="tab-content hidden">
+                <div class="item-list" id="admin-claim-list">
+                    <h3>Claim History</h3>
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div id="student-section" class="hidden">
+            <h2>Student Dashboard</h2>
+            <div class="tabs">
+                <button class="tab-button active" onclick="openStudentTab(event, 'search')">Search Items</button>
+                <button class="tab-button" onclick="openStudentTab(event, 'claims')">My Claims</button>
+            </div>
+            <div id="student-search" class="tab-content">
+                <div class="form-group">
+                    <label for="search">Search Lost Items</label>
+                    <input type="text" id="search" placeholder="Enter keyword to search">
+                </div>
+                <button onclick="searchItems()">Search</button>
+                <div id="results" class="results"></div>
+            </div>
+            <div id="student-claims" class="tab-content hidden">
+                <div class="item-list" id="student-claim-list">
+                    <h3>My Claims</h3>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="camera-container" class="camera-container">
+        <div class="camera-modal">
+            <div class="camera-loading" id="camera-loading">
+                <i class="fas fa-spinner"></i>
+                <p>Initializing camera...</p>
+            </div>
+            <div class="camera-controls">
+                <button class="close-camera" onclick="closeCamera()">
+                    <i class="fas fa-times"></i> Close
+                </button>
+                <div class="camera-btns">
+                    <button class="capture-btn" id="capture-btn" onclick="capturePhoto()" title="Capture Photo" disabled>
+                        <i class="fas fa-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            <img id="captured-photo" class="captured-photo" alt="Captured Photo">
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Univen Lost and Found. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Firebase Configuration - Replace with your own Firebase project config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkXiv0R3i0_zMuIljCnOFtEvkFpWpz9gE",
+            authDomain: "univen-lost-and-found-3b247.firebaseapp.com",
+            projectId: "univen-lost-and-found-3b247",
+            storageBucket: "univen-lost-and-found-3b247.firebasestorage.app",
+            messagingSenderId: "540346862618",
+            appId: "1:540346862618:web:50e1dd1104a6057a0fd5a3",
+            measurementId: "G-KBC7SC5XV6"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(app);
+        const db = firebase.firestore(app);
+        const storage = firebase.storage(app);
+
+        // Global variables
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_EMAIL = "admin@univenlostfound.com";
+        const DOMAIN = "@univenlostfound.com";
+        let currentUserRole = null;
+        let currentStudentNum = null;
+        let currentImageData = null;
+        let mediaStream = null;
+        let isCameraReady = false;
+
+        // Item icons configuration
+        const itemIcons = {
+            bagpack: {
+                class: 'fa-solid fa-suitcase',
+                name: 'Bagpack'
+            },
+            key: {
+                class: 'fa-solid fa-key',
+                name: 'Key'
+            },
+            wallet: {
+                class: 'fa-solid fa-wallet',
+                name: 'Wallet'
+            },
+            student_card: {
+                class: 'fa-solid fa-id-card',
+                name: 'Student Card'
+            },
+            laptop: {
+                class: 'fa-solid fa-laptop',
+                name: 'Laptop'
+            },
+            headphones: {
+                class: 'fa-solid fa-headphones',
+                name: 'Headphones'
+            },
+            books: {
+                class: 'fa-solid fa-book',
+                name: 'Books'
+            },
+            phone: {
+                class: 'fa-solid fa-mobile-alt',
+                name: 'Phone'
+            },
+            other: {
+                class: 'fa-solid fa-question-circle',
+                name: 'Other'
+            },
+            default: {
+                class: 'fa-solid fa-question-circle',
+                name: 'Unknown'
+            }
+        };
+
+        // Utility Functions
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function validateStudentNumber(studentNum) {
+            const numRegex = /^[0-9]{8}$/;
+            if (!numRegex.test(studentNum)) {
+                return [false, "Student number must consist of exactly 8 numbers."];
+            }
+            if (studentNum.startsWith("25")) {
+                return [false, "Student number cannot start with 25."];
+            }
+            return [true, ""];
+        }
+
+        function validatePassword(password, isStudent) {
+            if (isStudent) {
+                const passRegex = /^[0-9]{5}$/;
+                if (!passRegex.test(password)) {
+                    return [false, "Password must be exactly 5 digits."];
+                }
+            }
+            return [true, ""];
+        }
+
+        function restrictStudentPassword(input) {
+            if (document.getElementById("role").value === "student") {
+                input.value = input.value.replace(/[^0-9]/g, '').slice(0, 5);
+            }
+        }
+
+        function showError(message, elementId = "error") {
+            const errorDiv = document.getElementById(elementId);
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = "block";
+            }
+        }
+
+        function clearError(elementId = "error") {
+            const errorDiv = document.getElementById(elementId);
+            if (errorDiv) {
+                errorDiv.textContent = "";
+                errorDiv.style.display = "none";
+            }
+        }
+
+        // Navigation Functions
+        function showRegister() {
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("register-section").classList.remove("hidden");
+            clearError("register-error");
+        }
+
+        function showResetPassword() {
+            if (document.getElementById("role").value !== "student") {
+                showError("Password reset is only available for students.");
+                return;
+            }
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("reset-password-section").classList.remove("hidden");
+            clearError("reset-error");
+        }
+
+        function showLogin() {
+            document.getElementById("register-section").classList.add("hidden");
+            document.getElementById("reset-password-section").classList.add("hidden");
+            document.getElementById("login-section").classList.remove("hidden");
+            clearError();
+        }
+
+        // Authentication Functions
+        async function register() {
+            const studentNum = document.getElementById("register-student-num").value;
+            const password = document.getElementById("register-password").value;
+
+            clearError("register-error");
+
+            const [validNum, numMessage] = validateStudentNumber(studentNum);
+            if (!validNum) {
+                showError(numMessage, "register-error");
+                return;
+            }
+
+            const [validPass, passMessage] = validatePassword(password, true);
+            if (!validPass) {
+                showError(passMessage, "register-error");
+                return;
+            }
+
+            const email = `${studentNum}${DOMAIN}`;
+
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                alert("Registration successful! Please login.");
+                document.getElementById("register-student-num").value = "";
+                document.getElementById("register-password").value = "";
+                showLogin();
+            } catch (error) {
+                showError(error.message, "register-error");
+            }
+        }
+
+        async function resetPassword() {
+            const studentNum = document.getElementById("reset-student-num").value;
+
+            clearError("reset-error");
+
+            const [validNum, numMessage] = validateStudentNumber(studentNum);
+            if (!validNum) {
+                showError(numMessage, "reset-error");
+                return;
+            }
+
+            const email = `${studentNum}${DOMAIN}`;
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert("Password reset email sent! Check your inbox.");
+                document.getElementById("reset-student-num").value = "";
+                showLogin();
+            } catch (error) {
+                showError(error.message, "reset-error");
+            }
+        }
+
+        async function login() {
+            const role = document.getElementById("role").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            clearError();
+
+            let email;
+
+            if (role === "admin") {
+                if (username !== ADMIN_USERNAME) {
+                    showError("Invalid admin username.");
+                    return;
+                }
+                email = ADMIN_EMAIL;
+            } else {
+                const [validNum, numMessage] = validateStudentNumber(username);
+                if (!validNum) {
+                    showError(numMessage);
+                    return;
+                }
+                const [validPass, passMessage] = validatePassword(password, true);
+                if (!validPass) {
+                    showError(passMessage);
+                    return;
+                }
+                email = `${username}${DOMAIN}`;
+            }
+
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, password);
+                if (cred.user.email === ADMIN_EMAIL) {
+                    currentUserRole = "admin";
+                    currentStudentNum = null;
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("admin-section").classList.remove("hidden");
+                    openAdminTab(null, 'add');
+                } else {
+                    currentUserRole = "student";
+                    currentStudentNum = username;
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("student-section").classList.remove("hidden");
+                    openStudentTab(null, 'search');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Tab Management
+        function openAdminTab(event, tabName) {
+            const tabs = document.querySelectorAll('#admin-section .tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`admin-${tabName}`).classList.remove('hidden');
+
+            const buttons = document.querySelectorAll('#admin-section .tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const activeBtn = Array.from(buttons).find(btn =>
+                    btn.textContent.trim() === (tabName === 'add' ? 'Add Items' : tabName === 'items' ? 'All Items' : 'Claim History')
+                );
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+
+            if (tabName === 'items') {
+                updateAdminItems();
+            } else if (tabName === 'claims') {
+                updateAdminClaims();
+            }
+        }
+
+        function openStudentTab(event, tabName) {
+            const tabs = document.querySelectorAll('#student-section .tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`student-${tabName}`).classList.remove('hidden');
+
+            const buttons = document.querySelectorAll('#student-section .tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const activeBtn = Array.from(buttons).find(btn =>
+                    btn.textContent.trim() === (tabName === 'search' ? 'Search Items' : 'My Claims')
+                );
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+
+            if (tabName === 'search') {
+                document.getElementById('results').innerHTML = '<p>Please enter a search term to find items.</p>';
+            } else {
+                updateStudentClaims();
+            }
+        }
+
+        // CAMERA FUNCTIONS - FIXED VERSION
+        async function openCamera() {
+            console.log('Camera button clicked!'); // Debug log
+
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('video');
+            const loading = document.getElementById('camera-loading');
+            const captureBtn = document.getElementById('capture-btn');
+
+            // Check if running on HTTPS or localhost
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                alert('Camera access requires HTTPS or localhost. Please use a secure connection.');
+                return;
+            }
+
+            // Close existing camera if open
+            if (mediaStream) {
+                closeCamera();
+            }
+
+            try {
+                console.log('Requesting camera access...');
+
+                // Show loading
+                loading.classList.add('show');
+                captureBtn.disabled = true;
+                container.style.display = 'flex';
+
+                // Request camera access
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: {
+                            ideal: 640
+                        },
+                        height: {
+                            ideal: 480
+                        },
+                        facingMode: {
+                            ideal: 'environment'
+                        }
+                    },
+                    audio: false
+                });
+
+                console.log('Camera access granted');
+
+                // Set video source
+                video.srcObject = mediaStream;
+
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    console.log('Video metadata loaded');
+                    video.play().then(() => {
+                        console.log('Video playing');
+                        isCameraReady = true;
+
+                        // Hide loading
+                        loading.classList.remove('show');
+
+                        // Enable capture button
+                        captureBtn.disabled = false;
+
+                        // Set video dimensions
+                        const videoAspect = video.videoWidth / video.videoHeight;
+                        const maxWidth = 400;
+                        const maxHeight = 300;
+
+                        if (videoAspect > maxWidth / maxHeight) {
+                            video.style.width = maxWidth + 'px';
+                            video.style.height = (maxWidth / videoAspect) + 'px';
+                        } else {
+                            video.style.height = maxHeight + 'px';
+                            video.style.width = (maxHeight * videoAspect) + 'px';
+                        }
+
+                        video.style.margin = '0 auto';
+                        video.style.display = 'block';
+
+                    }).catch(err => {
+                        console.error('Error playing video:', err);
+                        alert('Error playing video: ' + err.message);
+                        closeCamera();
+                    });
+                };
+
+                // Handle video errors
+                video.onerror = (err) => {
+                    console.error('Video error:', err);
+                    alert('Video error occurred. Please try again.');
+                    closeCamera();
+                };
+
+                // Handle stream ended
+                if (mediaStream.getVideoTracks()[0]) {
+                    mediaStream.getVideoTracks()[0].addEventListener('ended', () => {
+                        console.log('Camera stream ended');
+                        isCameraReady = false;
+                        closeCamera();
+                    });
+                }
+
+            } catch (error) {
+                console.error('Camera error:', error);
+                loading.classList.remove('show');
+
+                let errorMessage = 'Unable to access camera. ';
+                switch (error.name) {
+                    case 'NotAllowedError':
+                        errorMessage += 'Please allow camera access in your browser settings.';
+                        break;
+                    case 'NotFoundError':
+                        errorMessage += 'No camera found on this device.';
+                        break;
+                    case 'NotReadableError':
+                        errorMessage += 'Camera is being used by another application.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+
+                alert(errorMessage);
+            }
+        }
+
+        function closeCamera() {
+            console.log('Closing camera');
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('video');
+            const capturedPhoto = document.getElementById('captured-photo');
+            const loading = document.getElementById('camera-loading');
+            const captureBtn = document.getElementById('capture-btn');
+
+            container.style.display = 'none';
+            loading.classList.remove('show');
+
+            if (video.srcObject) {
+                video.pause();
+                video.srcObject = null;
+            }
+
+            capturedPhoto.style.display = 'none';
+            captureBtn.disabled = true;
+
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            isCameraReady = false;
+        }
+
+        function capturePhoto() {
+            console.log('Capture button clicked');
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const capturedPhoto = document.getElementById('captured-photo');
+            const captureBtn = document.getElementById('capture-btn');
+
+            if (!isCameraReady) {
+                alert('Camera not ready. Please wait a moment and try again.');
+                return;
+            }
+
+            if (!video.videoWidth || !video.videoHeight) {
+                alert('Video not ready. Please wait a moment and try capturing again.');
+                return;
+            }
+
+            try {
+                captureBtn.disabled = true;
+
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                capturedPhoto.src = imageData;
+                capturedPhoto.style.display = 'block';
+                capturedPhoto.style.maxWidth = '100%';
+                capturedPhoto.style.maxHeight = '200px';
+
+                currentImageData = imageData;
+                updateImagePreview(imageData);
+
+                setTimeout(() => {
+                    closeCamera();
+                }, 1000);
+
+                console.log('Photo captured successfully');
+
+            } catch (error) {
+                console.error('Capture error:', error);
+                alert('Error capturing photo: ' + error.message);
+                captureBtn.disabled = false;
+            }
+        }
+
+        // Image Management Functions
+        function handleImageUpload(event) {
+            console.log('File upload triggered');
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                event.target.value = '';
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image file size must be less than 5MB.');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                currentImageData = imageData;
+                updateImagePreview(imageData);
+                event.target.value = '';
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file. Please try again.');
+                event.target.value = '';
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function updateImagePreview(imageData) {
+            const preview = document.getElementById('image-preview');
+
+            preview.innerHTML = '';
+
+            const img = document.createElement('img');
+            img.src = imageData;
+            img.alt = 'Item Image';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            preview.appendChild(img);
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-btn';
+            removeButton.innerHTML = '<i class="fas fa-times"></i>';
+            removeButton.title = 'Remove image';
+            removeButton.onclick = removeImage;
+            preview.appendChild(removeButton);
+
+            preview.classList.add('has-image');
+        }
+
+        function removeImage() {
+            if (confirm('Remove this image?')) {
+                currentImageData = null;
+                const preview = document.getElementById('image-preview');
+
+                preview.innerHTML = `
+                    <div class="placeholder">
+                        <i class="fas fa-image" style="font-size: 2rem; color: #ccc; margin-bottom: 10px;"></i>
+                        <p>No image selected</p>
+                    </div>
+                    <button class="remove-btn" onclick="removeImage()" title="Remove image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                preview.classList.remove('has-image');
+            }
+        }
+
+        // Firestore Helper
+        async function getLostItems() {
+            const querySnapshot = await db.collection("lostItems").get();
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        }
+
+        // Admin Functions
+        async function updateAdminItems() {
+            const adminItemsDiv = document.getElementById("admin-item-list");
+            adminItemsDiv.innerHTML = "<h3>All Items</h3>";
+            const lostItems = await getLostItems();
+            if (lostItems.length === 0) {
+                adminItemsDiv.innerHTML += "<p>No items added yet.</p>";
+                return;
+            }
+            lostItems.forEach(item => {
+                        const itemDiv = document.createElement("div");
+                        itemDiv.className = "item";
+                        const icon = itemIcons[item.category] || itemIcons.default;
+
+                        let imageHtml = '';
+                        if (item.imageUrl) {
+                            imageHtml = `<img src="${item.imageUrl}" alt="Item Image" class="item-image">`;
+                        }
+
+                        itemDiv.innerHTML = `
+                    ${imageHtml}
+                    <i class="${icon.class} icon ${item.category || 'default'}" title="${icon.name}"></i>
+                    <div class="content">
+                        <p>${item.description} ${item.claimed ? '<span class="claimed">(Claimed)</span>' : ''}</p>
+                        <p class="date">Added: ${item.date_added}</p>
+                        ${item.claimed && item.claimed_by ? `<p class="student-num">Claimed by: ${item.claimed_by}</p>` : ''}
+                    </div>
+                `;
+                adminItemsDiv.appendChild(itemDiv);
+            });
+        }
+
+        async function updateAdminClaims() {
+            const adminClaimsDiv = document.getElementById("admin-claim-list");
+            adminClaimsDiv.innerHTML = "<h3>Claim History</h3>";
+            const lostItems = await getLostItems();
+            const claimedItems = lostItems.filter(item => item.claimed);
+            if (claimedItems.length === 0) {
+                adminClaimsDiv.innerHTML += "<p>No items have been claimed.</p>";
+                return;
+            }
+            claimedItems.forEach(item => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "item";
+                const icon = itemIcons[item.category] || itemIcons.default;
+                
+                let imageHtml = '';
+                if (item.imageUrl) {
+                    imageHtml = `<img src="${item.imageUrl}" alt="Item Image" class="item-image">`;
+                }
+                
+                itemDiv.innerHTML = `
+                    ${imageHtml}
+                    <i class="${icon.class} icon ${item.category || 'default'}" title="${icon.name}"></i>
+                    <div class="content">
+                        <p>${item.description} <span class="claimed">(Claimed)</span></p>
+                        <p class="date">Added: ${item.date_added}</p>
+                        <p class="student-num">Claimed by: ${item.claimed_by}</p>
+                        <p class="date">Claimed: ${item.date_claimed}</p>
+                    </div>
+                `;
+                adminClaimsDiv.appendChild(itemDiv);
+            });
+        }
+
+        async function addItem() {
+            const description = document.getElementById("item-description").value;
+            const category = document.getElementById("item-category").value;
+            
+            if (!description.trim()) {
+                alert("Please enter a description.");
+                return;
+            }
+            
+            let imageUrl = null;
+            if (currentImageData) {
+                const storageRef = storage.ref(`images/${Date.now()}.jpg`);
+                await storageRef.putString(currentImageData, 'data_url');
+                imageUrl = await storageRef.getDownloadURL();
+            }
+
+            const newItem = {
+                description,
+                category,
+                claimed: false,
+                date_added: formatDate(new Date()),
+                date_claimed: null,
+                claimed_by: null,
+                imageUrl
+            };
+            
+            await db.collection('lostItems').add(newItem);
+            
+            document.getElementById("item-description").value = "";
+            document.getElementById("item-category").value = "bagpack";
+            currentImageData = null;
+            removeImage();
+            
+            alert("Item added successfully!");
+            
+            if (document.getElementById("admin-items").classList.contains('hidden')) {
+                openAdminTab(null, 'items');
+            } else {
+                updateAdminItems();
+            }
+        }
+
+        // Student Functions
+        async function updateStudentClaims() {
+            const studentClaimsDiv = document.getElementById("student-claim-list");
+            studentClaimsDiv.innerHTML = "<h3>My Claims</h3>";
+            const lostItems = await getLostItems();
+            const claimedItems = lostItems.filter(item => item.claimed && item.claimed_by === currentStudentNum);
+            if (claimedItems.length === 0) {
+                studentClaimsDiv.innerHTML += "<p>You have not claimed any items.</p>";
+                return;
+            }
+            claimedItems.forEach(item => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "item";
+                const icon = itemIcons[item.category] || itemIcons.default;
+                
+                let imageHtml = '';
+                if (item.imageUrl) {
+                    imageHtml = `<img src="${item.imageUrl}" alt="Item Image" class="item-image">`;
+                }
+                
+                itemDiv.innerHTML = `
+                    ${imageHtml}
+                    <i class="${icon.class} icon ${item.category || 'default'}" title="${icon.name}"></i>
+                    <div class="content">
+                        <p>${item.description} <span class="claimed">(Claimed)</span></p>
+                        <p class="date">Added: ${item.date_added}</p>
+                        <p class="date">Claimed: ${item.date_claimed}</p>
+                    </div>
+                `;
+                studentClaimsDiv.appendChild(itemDiv);
+            });
+        }
+
+        async function searchItems() {
+            const keyword = document.getElementById("search").value.toLowerCase();
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+
+            if (!keyword.trim()) {
+                resultsDiv.innerHTML = "<p>Please enter a search term to find items.</p>";
+                return;
+            }
+
+            const lostItems = await getLostItems();
+            const foundItems = lostItems.filter(item => 
+                !item.claimed && item.description.toLowerCase().includes(keyword)
+            );
+
+            if (foundItems.length === 0) {
+                resultsDiv.innerHTML = "<p>No unclaimed items match your search.</p>";
+                return;
+            }
+
+            foundItems.forEach((item) => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "item";
+                const icon = itemIcons[item.category] || itemIcons.default;
+                
+                let imageHtml = '';
+                if (item.imageUrl) {
+                    imageHtml = `<img src="${item.imageUrl}" alt="Item Image" class="item-image">`;
+                }
+                
+                itemDiv.innerHTML = `
+                    ${imageHtml}
+                    <i class="${icon.class} icon ${item.category || 'default'}" title="${icon.name}"></i>
+                    <div class="content">
+                        <p>${item.description}</p>
+                        <p class="date">Added: ${item.date_added}</p>
+                    </div>
+                    <button onclick="claimItem('${item.id}')">Claim</button>
+                `;
+                resultsDiv.appendChild(itemDiv);
+            });
+        }
+
+        async function claimItem(itemId) {
+            if (!itemId) return;
+
+            const itemRef = db.collection("lostItems").doc(itemId);
+            const itemSnap = await itemRef.get();
+            const item = itemSnap.data();
+
+            if (item && !item.claimed) {
+                await itemRef.update({
+                    claimed: true,
+                    date_claimed: formatDate(new Date()),
+                    claimed_by: currentStudentNum
+                });
+                alert("Item claimed successfully.");
+                searchItems();
+                updateStudentClaims();
+            }
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+            } catch (e) {
+                console.error("Logout error:", e);
+            }
+            currentUserRole = null;
+            currentStudentNum = null;
+            currentImageData = null;
+            closeCamera();
+            
+            document.getElementById("admin-section").classList.add("hidden");
+            document.getElementById("student-section").classList.add("hidden");
+            document.getElementById("register-section").classList.add("hidden");
+            document.getElementById("reset-password-section").classList.add("hidden");
+            document.getElementById("login-section").classList.remove("hidden");
+            
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
+            document.getElementById("search").value = "";
+            document.getElementById("results").innerHTML = "";
+            document.getElementById("admin-item-list").innerHTML = "<h3>All Items</h3>";
+            document.getElementById("admin-claim-list").innerHTML = "<h3>Claim History</h3>";
+            document.getElementById("student-claim-list").innerHTML = "<h3>My Claims</h3>";
+            
+            clearError();
+            clearError("register-error");
+            clearError("reset-error");
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            
+            // Set up file upload handler
+            const fileInput = document.getElementById('image-upload');
+            if (fileInput) {
+                fileInput.addEventListener('change', handleImageUpload);
+            }
+
+            // Set up camera button handler
+            const cameraBtn = document.getElementById('cameraBtn');
+            if (cameraBtn) {
+                cameraBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Camera button event triggered');
+                    openCamera();
+                });
+                console.log('Camera button event listener added');
+            }
+
+            // Handle page visibility change
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && mediaStream) {
+                    closeCamera();
+                }
+            });
+
+            console.log('App initialization complete');
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+
+</html>
